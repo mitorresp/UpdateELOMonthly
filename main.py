@@ -77,19 +77,33 @@ def clean_file(_filename, _destination):
 
 
 def getAgoraMembersELO(_agora_members, _elo_fide):
-    agora_clean = load_file(_agora_members)
+    print("\tGetting ELOs for Agora members...")
+    agora_clean = load_file(_agora_members).split("\n")
     foa_ELO_Fide = "\n".join(load_file(_elo_fide).split("\n"))
     result = ""
-    for line in foa_ELO_Fide.split("\n"):
-        lastName = " ".join(line.split(",")[0].split()[1:])
-        if lastName.upper() in agora_clean:
-            if len(line.split(",")) > 1:
-                name = " ".join(line.split(",")[1].split()[:1])
-                if name.upper() in agora_clean:
-                    result = result + "\n" + line
-            else:
-                result = result + "\n" + line
 
+    with alive_bar(
+        len(agora_clean), title="\t", length=30, manual=False
+    ) as bar:  # declare your expected total
+        for line in foa_ELO_Fide.split("\n"):
+            if len(line.split(",")) > 1:
+                lastName_fide = " ".join(
+                    line.split(",")[0].split()[1:]
+                )  # Remove 'ID number' of lastname
+                name_fide = " ".join(
+                    line.split(",")[1].split()[:1]
+                )  # Remove first space of name
+                if lastName_fide.upper() + ", " + name_fide.upper() in agora_clean:
+                    result += "\n" + line
+                    time.sleep(0.25)
+                    # bar(len(result.split("\n")) / len(agora_clean))  # (Manual mode)
+                    bar()  # (Definite mode)
+
+        # bar(1) # (Manual mode)
+    result = result[1:]
+    calc = len(agora_clean) - len(result.split("\n"))
+    if 0 < calc:
+        print("\tSome members do not have ELO Fide (" + str(calc) + ")")
     return result
 
 
