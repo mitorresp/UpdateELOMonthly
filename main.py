@@ -79,6 +79,8 @@ def getAgoraMembersELO(_agora_members, _elo_fide):
                 name = " ".join(line.split(",")[1].split()[:1])
                 if name.upper() in agora_clean:
                     result = result + "\n" + line
+            else:
+                result = result + "\n" + line
 
     return result
 
