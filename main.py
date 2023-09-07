@@ -103,11 +103,42 @@ def isUpdateNeeded():
     return cfg_date <= fide_update_date
 
 
+def send_email(subject, message):
+    # Code to send an email using an email sending service or library
+    password = input("\tType your password and press enter: ")
+
+    print("\tpassword: " + password)
+    pass
+
+
 def download_ELO_FIDE():
     if not isUpdateNeeded():
         print("\tNo need to update '" + FILE_UNZIP + "' file.")
     else:
         print("\tUpdating '" + FILE_UNZIP + "' file..")
+
+        retry_count = 0
+        max_retries = 3
+
+        while retry_count < max_retries:
+            try:
+                # Se realiza la descarga a la URL y se guarda el archivo de manera local con el nombre especificado
+                print("\tDownloading form '" + URL_ELO_FIDE + "' ..")
+                request.urlretrieve(URL_ELO_FIDE, PATH_ZIP + FILE_ZIP)
+                simulateLoading(1)
+                cfg.set_INTERNAL_CONFIG(
+                    "lastUpdate_ELO_FIDE", dt.datetime.now().strftime("%Y-%m-%d")
+                )
+                print("\tFinish donwload. File: '" + PATH_ZIP + FILE_ZIP + "'\n")
+                break
+            except Exception as e:
+                retry_count += 1
+                if retry_count == max_retries:
+                    send_email("Invalid URL Error", f"Failed to download file: {e}")
+                    print(f"\tFailed to download file: {e}\n")
+                else:
+                    print(f"\tConnection error, retrying in 30 seconds...")
+                    time.sleep(30)
 
 
 def unZipFile(fileNameZip, fileNameUnZip):
