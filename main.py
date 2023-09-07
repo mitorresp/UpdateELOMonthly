@@ -1,7 +1,12 @@
 import os
 import re
 from unicodedata import normalize
+import zipfile
 
+PATH_ZIP = "./assets/zips/"
+FILE_ZIP = "players_list.zip"
+FILE_UNZIP = "players_list_foa.txt"
+PATH_DOCS = "./assets/docs/"
 FILENAME_AGORA = "./assets/docs/agora_members.txt"
 FILENAME_AGORA_CLEANED = "./assets/docs/agora_members_clean.txt"
 FILENAME_ELO_FIDE = "./assets/docs/players_list_foa.txt"
@@ -85,7 +90,21 @@ def getAgoraMembersELO(_agora_members, _elo_fide):
     return result
 
 
+
+def unZipFile(fileNameZip, fileNameUnZip):
+    try:
+        archivos_zip = zipfile.ZipFile(PATH_ZIP + fileNameZip, "r")
+        print("\tZip files content:", archivos_zip.namelist())
+        archivos_zip.extract(fileNameUnZip, PATH_DOCS)
+        print("\tFile '" + fileNameUnZip + "' was extracted in '" + PATH_DOCS + "'")
+        archivos_zip.close()
+    except:
+        print("\tUnable to unzip '" + fileNameZip + "'\n")
+        pass
+
+
 # __main__
+unZipFile(FILE_ZIP, FILE_UNZIP)
 clean_file(FILENAME_AGORA, FILENAME_AGORA_CLEANED)
 write_file(
     FILENAME_AGORA_ELO, getAgoraMembersELO(FILENAME_AGORA_CLEANED, FILENAME_ELO_FIDE)
