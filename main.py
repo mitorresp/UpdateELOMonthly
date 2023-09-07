@@ -2,7 +2,10 @@ import os
 import re
 from unicodedata import normalize
 import zipfile
+import config as cfg
+import datetime as dt
 
+URL_ELO_FIDE = "http://ratings.fide.com/download/players_list.zip"
 PATH_ZIP = "./assets/zips/"
 FILE_ZIP = "players_list.zip"
 FILE_UNZIP = "players_list_foa.txt"
@@ -90,6 +93,22 @@ def getAgoraMembersELO(_agora_members, _elo_fide):
     return result
 
 
+def isUpdateNeeded():
+    cfg_date = dt.datetime(
+        *map(int, cfg.get_INTERNAL_CONFIG("lastUpdate_ELO_FIDE").split("-"))
+    )
+    now = dt.datetime.now()
+    fide_update_date = dt.datetime(now.year, now.month, 1)
+
+    return cfg_date <= fide_update_date
+
+
+def download_ELO_FIDE():
+    if not isUpdateNeeded():
+        print("\tNo need to update '" + FILE_UNZIP + "' file.")
+    else:
+        print("\tUpdating '" + FILE_UNZIP + "' file..")
+
 
 def unZipFile(fileNameZip, fileNameUnZip):
     try:
@@ -104,6 +123,7 @@ def unZipFile(fileNameZip, fileNameUnZip):
 
 
 # __main__
+download_ELO_FIDE()
 unZipFile(FILE_ZIP, FILE_UNZIP)
 clean_file(FILENAME_AGORA, FILENAME_AGORA_CLEANED)
 write_file(
