@@ -1,8 +1,11 @@
-import os
+import config as cfg
+import random
 import re
 from unicodedata import normalize
+from urllib import request
 import zipfile
-import config as cfg
+from alive_progress import alive_bar
+import time
 import datetime as dt
 
 URL_ELO_FIDE = "http://ratings.fide.com/download/players_list.zip"
@@ -14,6 +17,7 @@ FILENAME_AGORA = "./assets/docs/agora_members.txt"
 FILENAME_AGORA_CLEANED = "./assets/docs/agora_members_clean.txt"
 FILENAME_ELO_FIDE = "./assets/docs/players_list_foa.txt"
 FILENAME_AGORA_ELO = "./assets/docs/agora_members_ELO.txt"
+SIMULATE_MODE = True
 
 # MODES
 # r: open an existing file for a read operation.
@@ -28,9 +32,9 @@ def write_file(filename, content):
     try:
         with open(filename, "w") as f:
             f.write(content)
-        print("File " + filename + " written successfully.\n")
+        print("\tFile " + filename + " written successfully.\n")
     except IOError:
-        print("Error: could not write in the file " + filename + "\n")
+        print("\tError: could not write in the file " + filename + "\n")
 
 
 def load_file(filename):
@@ -53,6 +57,7 @@ def read_file(filename):
 
 
 def clean_file(_filename, _destination):
+    print("\tCleaning Agora names...")
     s = load_file(_filename)
     # for line in temp_file:
     # -> NFD y eliminar diacríticos
@@ -67,12 +72,13 @@ def clean_file(_filename, _destination):
     # -> NFC
     s = normalize("NFC", s)
     # -> Eliminar caracteres especiales
-    s = re.sub(r"[^a-zA-Z\n ]", "", s)
+    s = re.sub(r"[^a-zA-Z\n\t, ]", "", s)
     # -> Eliminar espacios en blanco
     _s = ""
     for line in s.split("\n"):
-        _s = _s + "\n" + " ".join(line.split())
+        _s += "\n" + " ".join(line.split())
     s = _s[1:]
+    simulateLoading(1)
     write_file(_destination, s)
 
 
@@ -125,6 +131,21 @@ def send_email(subject, message):
     pass
 
 
+def simulateLoading(_seconds):
+    if SIMULATE_MODE:
+        with alive_bar(
+            100, title="\t", length=30
+        ) as bar:  # declare your expected total
+            for x in range(100):
+                x = random.uniform(0, 1)
+                if x <= 0.5:
+                    x = 4
+                else:
+                    x = 0.01
+                time.sleep(x * (_seconds / 200))  # <<-- your original loop
+                bar()  # process each item
+
+
 def download_ELO_FIDE():
     if not isUpdateNeeded():
         print("\tNo need to update '" + FILE_UNZIP + "' file.")
@@ -159,8 +180,10 @@ def unZipFile(fileNameZip, fileNameUnZip):
     try:
         archivos_zip = zipfile.ZipFile(PATH_ZIP + fileNameZip, "r")
         print("\tZip files content:", archivos_zip.namelist())
+        print("\tUnzipping Fide file...")
         archivos_zip.extract(fileNameUnZip, PATH_DOCS)
-        print("\tFile '" + fileNameUnZip + "' was extracted in '" + PATH_DOCS + "'")
+        simulateLoading(0.3)
+        print("\tFile '" + fileNameUnZip + "' was extracted in '" + PATH_DOCS + "'\n")
         archivos_zip.close()
     except:
         print("\tUnable to unzip '" + fileNameZip + "'\n")
@@ -174,3 +197,4 @@ clean_file(FILENAME_AGORA, FILENAME_AGORA_CLEANED)
 write_file(
     FILENAME_AGORA_ELO, getAgoraMembersELO(FILENAME_AGORA_CLEANED, FILENAME_ELO_FIDE)
 )
+print("\tFINISH")
